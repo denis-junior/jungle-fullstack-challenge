@@ -41,13 +41,13 @@ services:
 
     # Auth Service
 
-  auth-service: 
+  auth-service:
     container_name: auth-service
-    build: 
+    build:
       context: ./apps/auth-service
       dockerfile: Dockerfile
     ports:
-      - '3002:3002'
+      - "3002:3002"
     environment:
       - NODE_ENV=development
       - PORT=3002
@@ -68,14 +68,38 @@ services:
       - challenge-network
 
     # API Gateway
-  
-  api-gateway: 
+
+    # Tasks Service
+  tasks-service:
+    container_name: tasks-service
+    build:
+      context: ./apps/tasks-service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=challenge_db
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - TASKS_QUEUE=tasks_queue
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - challenge-network
+
+  api-gateway:
     container_name: api-gateway
-    build: 
+    build:
       context: ./apps/api-gateway
       dockerfile: Dockerfile
     ports:
-      - '3001:3001'
+      - "3001:3001"
     environment:
       - NODE_ENV=development
       - PORT=3001
