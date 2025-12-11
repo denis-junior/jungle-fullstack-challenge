@@ -1,0 +1,104 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:17.5-alpine3.21
+    container_name: db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: challenge_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - challenge-network
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" # Porta AMQP (conexão dos serviços)
+      - "15672:15672" # Porta Web Management (interface visual)
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - challenge-network
+
+    # Auth Service
+
+  auth-service: 
+    container_name: auth-service
+    build: 
+      context: ./apps/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - '3002:3002'
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=challenge_db
+      - JWT_SECRET=your-super-secret-jwt-key
+      - JWT_EXPIRES_IN=15m
+      - JWT_REFRESH_SECRET=your-super-secret-refresh-key
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - challenge-network
+
+    # API Gateway
+  
+  api-gateway: 
+    container_name: api-gateway
+    build: 
+      context: ./apps/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - '3001:3001'
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - JWT_SECRET=your-super-secret-jwt-key
+      - JWT_EXPIRES_IN=15m
+      - JWT_REFRESH_SECRET=your-super-secret-refresh-key
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - AUTH_QUEUE=auth_queue
+      - TASKS_QUEUE=tasks_queue
+      - NOTIFICATIONS_QUEUE=notifications_queue
+      - CORS_ORIGIN=http://localhost:3000
+    depends_on:
+      - rabbitmq
+      - auth-service
+    networks:
+      - challenge-network
+volumes:
+  postgres_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+networks:
+  challenge-network:
+    driver: bridge
