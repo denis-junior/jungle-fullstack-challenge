@@ -56,9 +56,9 @@ services:
       - DB_USERNAME=postgres
       - DB_PASSWORD=password
       - DB_DATABASE=challenge_db
-      - JWT_SECRET=your-super-secret-jwt-key
+      - JWT_SECRET=junglechallengsecretjwt
       - JWT_EXPIRES_IN=15m
-      - JWT_REFRESH_SECRET=your-super-secret-refresh-key
+      - JWT_REFRESH_SECRET=junglechallengsecretjwtrefresh
       - JWT_REFRESH_EXPIRES_IN=7d
       - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
     depends_on:
@@ -70,6 +70,7 @@ services:
     # API Gateway
 
     # Tasks Service
+  
   tasks-service:
     container_name: tasks-service
     build:
@@ -87,6 +88,7 @@ services:
       - DB_DATABASE=challenge_db
       - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
       - TASKS_QUEUE=tasks_queue
+      - EVENTS_QUEUE=events_queue
     depends_on:
       - db
       - rabbitmq
@@ -103,20 +105,22 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3001
-      - JWT_SECRET=your-super-secret-jwt-key
+      - JWT_SECRET=junglechallengsecretjwt
       - JWT_EXPIRES_IN=15m
-      - JWT_REFRESH_SECRET=your-super-secret-refresh-key
+      - JWT_REFRESH_SECRET=junglechallengsecretjwtrefresh
       - JWT_REFRESH_EXPIRES_IN=7d
       - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
       - AUTH_QUEUE=auth_queue
       - TASKS_QUEUE=tasks_queue
       - NOTIFICATIONS_QUEUE=notifications_queue
+      - EVENTS_QUEUE=events_queue
       - CORS_ORIGIN=http://localhost:3000
     depends_on:
       - rabbitmq
       - auth-service
     networks:
       - challenge-network
+
 volumes:
   postgres_data:
     driver: local
