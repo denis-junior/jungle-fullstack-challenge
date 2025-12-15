@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <title>WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h1>WebSocket Notifications Test</h1>
+    <div id="status">Desconectado</div>
+    <div id="messages"></div>
+
+    <script>
+      // SUBSTITUA PELO SEU TOKEN REAL
+      const token =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhODdiNjVhYy0xZTAyLTQyNDEtODE0ZC0wMjc4ODkzZjE0NDciLCJlbWFpbCI6ImRlbmlzanVuaW9yQGV4YW1wbGUuY29tIiwidXNlcm5hbWUiOiJkZW5pc2p1bmlvciIsImlhdCI6MTc2NTc2Njg1NywiZXhwIjoxNzY1NzY3NzU3fQ.T8PQbQcRYV0yEssbHBg8phNqgirktF6K6tjXLW4QfHI';
+
+      const socket = io('http://localhost:3004', {
+        auth: { token },
+      });
+
+      socket.on('connect', () => {
+        document.getElementById('status').innerText = '✅ Conectado! ';
+        console.log('Conectado ao WebSocket');
+      });
+
+      socket.on('connected', (data) => {
+        console.log('Servidor confirmou:', data);
+      });
+
+      socket.on('task:created', (data) => {
+        console.log('Nova tarefa:', data);
+        addMessage('🆕 ' + data.message);
+      });
+
+      socket.on('task:updated', (data) => {
+        console.log('Tarefa atualizada:', data);
+        addMessage('🔄 ' + data.message);
+      });
+
+      socket.on('comment:new', (data) => {
+        console.log('Novo comentário:', data);
+        addMessage('💬 ' + data.message);
+      });
+
+      socket.on('disconnect', () => {
+        document.getElementById('status').innerText = '❌ Desconectado';
+      });
+
+      function addMessage(msg) {
+        const div = document.createElement('div');
+        div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        document.getElementById('messages').appendChild(div);
+      }
+    </script>
+  </body>
+</html>
