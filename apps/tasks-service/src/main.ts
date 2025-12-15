@@ -13,7 +13,7 @@ async function bootstrap() {
     transport: Transport.RMQ,
     options: {
       urls: [configService.get('RABBITMQ_URL')],
-      queue: configService.get('TASKS_QUEUE'),
+      queue: configService.get<string>('TASKS_QUEUE'),
       queueOptions: {
         durable: true,
       },
@@ -31,7 +31,7 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  const port = configService.get('PORT') || 3003;
+  const port = configService.get<number>('PORT') || 3003;
   await app.listen(port);
 
   console.log(`🚀 Tasks Service rodando na porta ${port}`);

@@ -3,11 +3,12 @@ import {
   NotFoundException,
   Inject,
   ForbiddenException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, In } from 'typeorm';
+import { Repository, Like, FindOptionsWhere } from 'typeorm';
 import { ClientProxy } from '@nestjs/microservices';
-import { Task, TaskStatus } from './entities/task.entity';
+import { Task } from './entities/task.entity';
 import { Comment } from './entities/comment.entity';
 import { TaskAssignment } from './entities/task-assignment.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -16,7 +17,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { QueryTasksDto } from './dto/query-tasks.dto';
 
 @Injectable()
-export class TasksService {
+export class TasksService implements OnModuleInit {
   constructor(
     @InjectRepository(Task)
     private taskRepository: Repository<Task>,
@@ -27,6 +28,10 @@ export class TasksService {
     @Inject('RABBITMQ_CLIENT')
     private rabbitClient: ClientProxy,
   ) {}
+
+  async onModuleInit() {
+    await this.rabbitClient.connect();
+  }
 
   async create(createTaskDto: CreateTaskDto, userId: string) {
     const { assignedUserIds, ...taskData } = createTaskDto;
@@ -66,7 +71,7 @@ export class TasksService {
     const { page, size, status, priority, search } = queryDto;
     const skip = (page - 1) * size;
 
-    const where: any = {};
+    const where: FindOptionsWhere<Task> = {};
 
     if (status) where.status = status;
     if (priority) where.priority = priority;

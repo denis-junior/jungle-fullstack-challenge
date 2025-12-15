@@ -20,7 +20,7 @@ import { TaskAssignment } from './entities/task-assignment.entity';
           transport: Transport.RMQ,
           options: {
             urls: [configService.get('RABBITMQ_URL')],
-            queue: configService.get('EVENTS_QUEUE'), // Fila para publicar eventos
+            queue: configService.get<string>('EVENTS_QUEUE'), // Fila para publicar eventos
             queueOptions: {
               durable: true,
             },
