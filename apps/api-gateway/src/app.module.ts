@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -11,11 +12,12 @@ import { AuthModule } from './auth/auth.module';
     }),
     ThrottlerModule.forRoot([
       {
-        ttl: 1000, // 1 segundo
-        limit: 10, // 10 requisições por segundo
+        ttl: 1000,
+        limit: 10,
       },
     ]),
     AuthModule,
+    TasksModule,
   ],
 })
 export class AppModule {}
