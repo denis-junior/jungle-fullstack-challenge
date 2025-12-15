@@ -121,6 +121,30 @@ services:
     networks:
       - challenge-network
 
+  notifications-service:
+    container_name: notifications-service
+    build:
+      context: ./apps/notifications-service
+      dockerfile: Dockerfile
+    ports:
+      - '3004:3004'
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=challenge_db
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - EVENTS_QUEUE=events_queue
+      - JWT_SECRET=junglechallengsecretjwt
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - challenge-network
+
 volumes:
   postgres_data:
     driver: local
