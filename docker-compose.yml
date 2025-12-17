@@ -1,5 +1,4 @@
 services:
-  # PostgreSQL Database
   db:
     image: postgres:17.5-alpine3.21
     container_name: db
@@ -18,8 +17,6 @@ services:
       retries: 5
     networks:
       - challenge-network
-
-  # RabbitMQ Message Broker
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: rabbitmq
@@ -38,8 +35,6 @@ services:
       retries: 5
     networks:
       - challenge-network
-
-    # Auth Service
 
   auth-service:
     container_name: auth-service
