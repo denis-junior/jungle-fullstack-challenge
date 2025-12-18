@@ -14,6 +14,14 @@ export enum NotificationType {
   STATUS_CHANGED = 'STATUS_CHANGED',
 }
 
+export interface NotificationMetadata {
+  taskId?: string;
+  taskTitle?: string;
+  commentId?: string;
+  oldStatus?: string;
+  newStatus?: string;
+}
+
 @Entity('notifications')
 @Index(['userId', 'read']) // Índice para consultas rápidas
 export class Notification {
@@ -37,7 +45,7 @@ export class Notification {
   message: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: any; // Dados adicionais (taskId, commentId, etc.)
+  metadata: NotificationMetadata;
 
   @Column({ default: false })
   read: boolean;

@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, FindOptionsWhere } from 'typeorm';
 import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 import { Task } from './entities/task.entity';
 import { Comment } from './entities/comment.entity';
 import { TaskAssignment } from './entities/task-assignment.entity';
@@ -15,6 +16,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { QueryTasksDto } from './dto/query-tasks.dto';
+import { User } from 'src/interfaces';
 
 @Injectable()
 export class TasksService implements OnModuleInit {
@@ -27,10 +29,13 @@ export class TasksService implements OnModuleInit {
     private assignmentRepository: Repository<TaskAssignment>,
     @Inject('RABBITMQ_CLIENT')
     private rabbitClient: ClientProxy,
+    @Inject('AUTH_SERVICE')
+    private authService: ClientProxy,
   ) {}
 
   async onModuleInit() {
     await this.rabbitClient.connect();
+    await this.authService.connect();
   }
 
   async create(createTaskDto: CreateTaskDto, userId: string) {
@@ -189,6 +194,7 @@ export class TasksService implements OnModuleInit {
       userId,
       createdAt: savedComment.createdAt,
       assignedUserIds: task.assignments.map((a) => a.userId),
+      createdBy: task.createdBy,
     });
 
     return savedComment;
@@ -206,8 +212,32 @@ export class TasksService implements OnModuleInit {
       order: { createdAt: 'DESC' },
     });
 
+    // Buscar dados dos usuários
+    const userIds: string[] = [...new Set(comments.map((c) => c.userId))];
+    let usersMap = new Map();
+
+    if (userIds.length > 0) {
+      try {
+        const users = await firstValueFrom<User[]>(
+          this.authService.send({ cmd: 'find-users-by-ids' }, { userIds }),
+        );
+        usersMap = new Map(users.map((u) => [u.id, u]));
+      } catch (error) {
+        console.error('❌ Erro ao buscar usuários:', error);
+      }
+    }
+
+    // Adicionar dados do usuário aos comentários
+    const commentsWithUsers = comments.map((comment) => ({
+      ...comment,
+      user: (usersMap.get(comment.userId) || {
+        id: comment.userId,
+        username: 'Usuário desconhecido',
+      }) as User,
+    }));
+
     return {
-      data: comments,
+      data: commentsWithUsers,
       meta: {
         page,
         size,

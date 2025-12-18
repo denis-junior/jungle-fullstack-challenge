@@ -27,6 +27,21 @@ import { TaskAssignment } from './entities/task-assignment.entity';
           },
         }),
       },
+      {
+        name: 'AUTH_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get('RABBITMQ_URL')],
+            queue: 'auth_queue',
+            queueOptions: {
+              durable: true,
+            },
+          },
+        }),
+      },
     ]),
   ],
   controllers: [TasksController],
