@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MultiSelectUsers } from "@/components/ui/multi-select-users";
-import type { ITaskSubmit, Task, User } from "@/types";
+import type { Task, User } from "@/types";
 import { TaskPriority, TaskStatus } from "@/types";
 import { tasksService } from "@/services/tasks.service";
 import { usersService } from "@/services/users.service";

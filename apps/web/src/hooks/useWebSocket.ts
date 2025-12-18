@@ -21,8 +21,8 @@ export const useWebSocket = (userId: string | null) => {
       // console.log("WebSocket conectado");
     });
 
-    socket.on("connected", (data) => {
-      // console.log("Servidor confirmou:", data);
+    socket.on("connected", () => {
+      // console.log("Servidor confirmou conexão");
     });
 
     socket.on("task:created", (data) => {
