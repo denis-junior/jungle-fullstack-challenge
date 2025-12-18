@@ -21,7 +21,7 @@ import { AuthModule } from './auth/auth.module';
         database: configService.get<string>('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, // APENAS para desenvolvimento!
-        logging: true,
+        // logging: true,
       }),
     }),
     AuthModule,

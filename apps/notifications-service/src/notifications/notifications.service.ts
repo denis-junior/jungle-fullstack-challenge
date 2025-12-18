@@ -3,6 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Notification, NotificationType } from './entities/notification.entity';
 import { QueryNotificationsDto } from './dto/query-notifications.dto';
+import {
+  ITaskCommentCreatedPayload,
+  ITaskCreatedPayload,
+  ITaskUpdatedPayload,
+} from './interfaces';
 
 @Injectable()
 export class NotificationsService {
@@ -106,7 +111,7 @@ export class NotificationsService {
 
   // PROCESSADORES DE EVENTOS
 
-  async handleTaskCreated(event: Record<string, unknown>) {
+  async handleTaskCreated(event: ITaskCreatedPayload) {
     const { taskId, title, createdBy, assignedUserIds, createdAt } = event;
 
     if (!Array.isArray(assignedUserIds) || assignedUserIds.length === 0) {
@@ -133,7 +138,7 @@ export class NotificationsService {
     console.log(`✅ Notificações criadas para tarefa:  ${String(title)}`);
   }
 
-  async handleTaskUpdated(event: Record<string, unknown>) {
+  async handleTaskUpdated(event: ITaskUpdatedPayload) {
     const {
       taskId,
       title,
@@ -173,7 +178,7 @@ export class NotificationsService {
     console.log(`✅ Notificações de status para:  ${String(title)}`);
   }
 
-  async handleCommentCreated(event: Record<string, unknown>) {
+  async handleCommentCreated(event: ITaskCommentCreatedPayload) {
     const {
       commentId,
       taskId,

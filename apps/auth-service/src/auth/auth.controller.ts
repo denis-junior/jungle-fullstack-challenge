@@ -29,4 +29,14 @@ export class AuthController {
   async validateUser(@Payload() userId: string) {
     return this.authService.validateUser(userId);
   }
+
+  @MessagePattern({ cmd: 'find-all-users' })
+  async findAllUsers() {
+    return this.authService.findAll();
+  }
+
+  @MessagePattern({ cmd: 'find-users-by-ids' })
+  async findUsersByIds(@Payload() data: { userIds: string[] }) {
+    return this.authService.findUsersByIds(data.userIds);
+  }
 }

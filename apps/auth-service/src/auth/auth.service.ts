@@ -12,6 +12,11 @@ import { User } from './entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
+export interface IPayload {
+  sub: string;
+  email: string;
+  username: string;
+}
 @Injectable()
 export class AuthService {
   constructor(
@@ -99,9 +104,12 @@ export class AuthService {
   async refreshToken(refreshToken: string) {
     try {
       // Decodificar o refresh token para obter o userId
-      const payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      });
+      const payload = await this.jwtService.verifyAsync<IPayload>(
+        refreshToken,
+        {
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        },
+      );
 
       const user = await this.userRepository.findOne({
         where: { id: payload.sub },
@@ -124,7 +132,7 @@ export class AuthService {
       await this.updateRefreshToken(user.id, tokens.refreshToken);
 
       return tokens;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Acesso negado');
     }
   }
@@ -162,5 +170,24 @@ export class AuthService {
     await this.userRepository.update(userId, {
       refreshToken: hashedRefreshToken,
     });
+  }
+
+  async findAll() {
+    const users = await this.userRepository.find({
+      select: ['id', 'email', 'username', 'createdAt'],
+    });
+    return users;
+  }
+
+  async findUsersByIds(userIds: string[]) {
+    const users = await this.userRepository.find({
+      where: userIds.map((id) => ({ id })),
+      select: ['id', 'email', 'username'],
+    });
+    return users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+    }));
   }
 }

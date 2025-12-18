@@ -21,7 +21,6 @@ import { NotificationsModule } from './notifications/notifications.module';
         database: configService.get('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, // dev
-        logging: true,
       }),
     }),
     NotificationsModule,
