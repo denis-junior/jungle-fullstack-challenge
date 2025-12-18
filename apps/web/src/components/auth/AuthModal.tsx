@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import axios from "axios";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from 'sonner';
+import { toast } from "sonner";
+import type { IAuthLogin, IAuthRegister } from "@/types";
 
 const loginSchema = z.object({
   emailOrUsername: z.string().min(3, "Mínimo 3 caracteres"),
@@ -43,27 +45,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     resolver: zodResolver(registerSchema),
   });
 
-  const handleLogin = async (data: any) => {
+  const handleLogin = async (data: IAuthLogin) => {
     try {
       await login(data);
       toast.success("Login realizado com sucesso!");
       onClose();
-    } catch (error: any) {
-      toast.error(
-        `Erro ao fazer login: ${error.response?.data?.message || "Erro desconhecido"}`
-      );
+    } catch (error) {
+      const errorMessage =
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : "Erro desconhecido";
+      toast.error(`Erro ao fazer login: ${errorMessage}`);
     }
   };
 
-  const handleRegister = async (data: any) => {
+  const handleRegister = async (data: IAuthRegister) => {
     try {
       await register(data);
       toast.success("Cadastro realizado com sucesso!");
       onClose();
-    } catch (error: any) {
-      toast.error(
-        `Erro ao cadastrar: ${error.response?.data?.message || "Erro desconhecido"}`
-      );
+    } catch (error) {
+      const errorMessage =
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : "Erro desconhecido";
+      toast.error(`Erro ao cadastrar: ${errorMessage}`);
     }
   };
 

@@ -18,12 +18,12 @@ export const tasksService = {
     return response.data;
   },
 
-  createTask: async (data: any): Promise<Task> => {
+  createTask: async (data: Task): Promise<Task> => {
     const response = await api.post("/tasks", data);
     return response.data;
   },
 
-  updateTask: async (id: string, data: any): Promise<Task> => {
+  updateTask: async (id: string, data: Task): Promise<Task> => {
     const response = await api.put(`/tasks/${id}`, data);
     return response.data;
   },

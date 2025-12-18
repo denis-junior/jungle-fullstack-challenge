@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MultiSelectUsers } from "@/components/ui/multi-select-users";
-import { TaskPriority, TaskStatus, type User } from "@/types";
+import { TaskPriority, TaskStatus, type ITaskSubmit, type User } from "@/types";
 import { tasksService } from "@/services/tasks.service";
 import { usersService } from "@/services/users.service";
 import { Plus } from "lucide-react";
@@ -76,7 +76,7 @@ export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
     }
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: z.infer<typeof taskSchema>) => {
     setIsLoading(true);
     try {
       const payload = {
@@ -89,9 +89,13 @@ export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
       form.reset();
       setSelectedUserIds([]);
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+      ? error.message 
+      : (error as any)?.response?.data?.message || "Erro desconhecido";
+      
       toast.error("Erro ao criar tarefa", {
-        description: error.response?.data?.message || "Erro desconhecido",
+      description: errorMessage,
       });
     } finally {
       setIsLoading(false);

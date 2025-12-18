@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MultiSelectUsers } from "@/components/ui/multi-select-users";
-import type { Task, User } from "@/types";
+import type { ITaskSubmit, Task, User } from "@/types";
 import { TaskPriority, TaskStatus } from "@/types";
 import { tasksService } from "@/services/tasks.service";
 import { usersService } from "@/services/users.service";
@@ -84,20 +84,27 @@ export const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
     }
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: z.infer<typeof taskSchema>) => {
+    console.log("dados da tarefa", data);
     setIsLoading(true);
     try {
       const payload = {
         ...data,
-        assignedUserIds: selectedUserIds.length > 0 ? selectedUserIds : undefined,
+        assignedUserIds:
+          selectedUserIds.length > 0 ? selectedUserIds : undefined,
       };
       await tasksService.updateTask(task.id, payload);
       toast.success("Tarefa atualizada com sucesso!");
       setIsOpen(false);
       onSuccess?.();
-    } catch (error: any) {
-      toast.error("Erro ao atualizar tarefa", {
-        description: error.response?.data?.message || "Erro desconhecido",
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (error as any)?.response?.data?.message || "Erro desconhecido";
+
+      toast.error("Erro ao criar tarefa", {
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);

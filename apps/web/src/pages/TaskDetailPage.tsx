@@ -87,9 +87,9 @@ export const TaskDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       navigate({ to: "/tasks" });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error("Erro ao deletar tarefa", {
-        description: error.response?.data?.message || "Erro desconhecido",
+        description: error.message || "Erro desconhecido",
       });
     },
   });

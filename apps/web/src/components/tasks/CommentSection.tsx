@@ -14,10 +14,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare, Send } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AxiosError } from "axios";
 
 const commentSchema = z.object({
   content: z.string().min(1, "Comentário não pode estar vazio"),
 });
+
+type CommentFormData = z.infer<typeof commentSchema>;
 
 interface CommentSectionProps {
   taskId: string;
@@ -48,14 +51,14 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ taskId }) => {
       queryClient.invalidateQueries({ queryKey: ["comments", taskId] });
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ message?: string }>) => {
       toast.error("Erro ao adicionar comentário", {
         description: error.response?.data?.message || "Erro desconhecido",
       });
     },
   });
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: CommentFormData) => {
     createCommentMutation.mutate(data.content);
   };
 

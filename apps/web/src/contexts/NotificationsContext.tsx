@@ -9,6 +9,7 @@ import {
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 import { toast } from "sonner";
+import type { INotificationsLocalStorage, INotificationWebSocket } from "@/types";
 
 export interface Notification {
   id: string;
@@ -45,8 +46,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
+        console.log("Notificações carregadas do localStorage:", parsed);
         // Converter createdAt de string para Date
-        return parsed.map((n: any) => ({
+        return parsed.map((n: INotificationsLocalStorage) => ({
           ...n,
           createdAt: new Date(n.createdAt),
         }));
@@ -113,30 +115,30 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   // Registrar listeners de notificação
   useEffect(() => {
     if (!socket) {
-      console.log("⏳ Aguardando socket no NotificationsContext...");
+      console.log("Aguardando socket no NotificationsContext...");
       return;
     }
 
-    console.log("✅ Registrando listeners de notificação no socket");
+    console.log("Registrando listeners de notificação no socket");
 
-    const handleTaskCreated = (data: any) => {
+    const handleTaskCreated = (data: INotificationWebSocket) => {
       console.log("🔔 NotificationsContext recebeu task:created:", data);
       console.log("User ID:", user?.id, "Assigned:", data.assignedUserIds);
       
-      console.log("✅ Adicionando notificação de tarefa atribuída");
+      console.log("Adicionando notificação de tarefa atribuída");
       addNotification({
         type: "task_assigned",
         title: "Nova tarefa atribuída",
         message: data.message || `Você foi atribuído à tarefa: ${data.title || ""}`,
         taskId: data.taskId,
       });
-      toast.success("📋 Nova tarefa atribuída a você!");
+      toast.success("Nova tarefa atribuída a você!");
     };
 
-    const handleTaskUpdated = (data: any) => {
-      console.log("🔔 NotificationsContext recebeu task:updated:", data);
+    const handleTaskUpdated = (data: INotificationWebSocket) => {
+      console.log("NotificationsContext recebeu task:updated:", data);
       
-      console.log("✅ Adicionando notificação de tarefa atualizada");
+      console.log("Adicionando notificação de tarefa atualizada");
       addNotification({
         type: "task_updated",
         title: "Tarefa atualizada",
@@ -146,8 +148,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       toast.info("🔄 Tarefa atualizada");
     };
 
-    const handleTaskDeleted = (data: any) => {
-      console.log("🔔 NotificationsContext recebeu task:deleted:", data);
+    const handleTaskDeleted = (data: INotificationWebSocket) => {
+      console.log("NotificationsContext recebeu task:deleted:", data);
       addNotification({
         type: "task_deleted",
         title: "Tarefa deletada",
@@ -157,8 +159,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       toast.error("🗑️ Tarefa deletada");
     };
 
-    const handleCommentNew = (data: any) => {
-      console.log("🔔 NotificationsContext recebeu comment:new:", data);
+    const handleCommentNew = (data: INotificationWebSocket) => {
+      console.log("NotificationsContext recebeu comment:new:", data);
       addNotification({
         type: "comment_added",
         title: "Novo comentário",
