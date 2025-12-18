@@ -19,11 +19,15 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Não tentar refresh em rotas de autenticação ou se já tentou ou se não tem refreshToken
+    const isAuthRoute = originalRequest.url?.includes('/auth/login') || 
+                       originalRequest.url?.includes('/auth/register');
+    const refreshToken = localStorage.getItem("refreshToken");
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRoute && refreshToken) {
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
           { refreshToken },
