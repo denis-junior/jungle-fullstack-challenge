@@ -52,9 +52,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       onClose();
     } catch (error) {
       const errorMessage =
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? error.response.data.message
-          : "Erro desconhecido";
+        error instanceof Error ? error.message : "Erro desconhecido";
       toast.error(`Erro ao fazer login: ${errorMessage}`);
     }
   };
@@ -66,9 +64,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       onClose();
     } catch (error) {
       const errorMessage =
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? error.response.data.message
-          : "Erro desconhecido";
+      error instanceof Error ? error.message : "Erro desconhecido";
       toast.error(`Erro ao cadastrar: ${errorMessage}`);
     }
   };
