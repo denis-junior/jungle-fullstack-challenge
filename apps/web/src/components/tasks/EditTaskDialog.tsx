@@ -85,7 +85,6 @@ export const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
   };
 
   const handleSubmit = async (data: z.infer<typeof taskSchema>) => {
-    console.log("dados da tarefa", data);
     setIsLoading(true);
     try {
       const payload = {

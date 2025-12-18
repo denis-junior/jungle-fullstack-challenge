@@ -41,8 +41,8 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') || 3001;
   await app.listen(port);
 
-  console.log(`🚀 API Gateway rodando na porta ${port}`);
-  console.log(`📚 Swagger disponível em: http://localhost:${port}/api/docs`);
+  console.log(`API Gateway rodando na porta ${port}`);
+  console.log(`Swagger disponível em: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

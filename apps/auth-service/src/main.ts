@@ -34,8 +34,8 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') || 3002;
   await app.listen(port);
 
-  console.log(`🚀 Auth Service rodando na porta ${port}`);
-  console.log(`📬 RabbitMQ conectado: auth_queue`);
+  console.log(`Auth Service rodando na porta ${port}`);
+  console.log(`RabbitMQ conectado: auth_queue`);
 }
 
 bootstrap();

@@ -13,8 +13,6 @@ export class NotificationsConsumer {
 
   @EventPattern('task.created')
   async handleTaskCreated(@Payload() data: types.ITaskCreatedPayload) {
-    console.log('Evento recebido:  task.created', data);
-
     await this.notificationsService.handleTaskCreated(data);
 
     // Emitir via WebSocket

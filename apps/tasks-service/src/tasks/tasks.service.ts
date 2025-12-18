@@ -223,7 +223,7 @@ export class TasksService implements OnModuleInit {
         );
         usersMap = new Map(users.map((u) => [u.id, u]));
       } catch (error) {
-        console.error('❌ Erro ao buscar usuários:', error);
+        console.error('Erro ao buscar usuários:', error);
       }
     }
 

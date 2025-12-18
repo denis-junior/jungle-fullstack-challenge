@@ -135,7 +135,7 @@ export class NotificationsService {
       { taskId, createdBy, createdAt },
     );
 
-    console.log(`✅ Notificações criadas para tarefa:  ${String(title)}`);
+    console.log(`Notificações criadas para tarefa:  ${String(title)}`);
   }
 
   async handleTaskUpdated(event: ITaskUpdatedPayload) {
@@ -175,7 +175,7 @@ export class NotificationsService {
       { taskId, updatedBy, oldStatus, newStatus, updatedAt },
     );
 
-    console.log(`✅ Notificações de status para:  ${String(title)}`);
+    console.log(`Notificações de status para:  ${String(title)}`);
   }
 
   async handleCommentCreated(event: ITaskCommentCreatedPayload) {
@@ -210,6 +210,6 @@ export class NotificationsService {
       { commentId, taskId, userId, createdAt },
     );
 
-    console.log(`✅ Notificações de comentário para:  ${String(taskTitle)}`);
+    console.log(`Notificações de comentário para:  ${String(taskTitle)}`);
   }
 }

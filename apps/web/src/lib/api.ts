@@ -41,8 +41,7 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Token expirado e refresh falhou - fazer logout completo
-        console.log("🔒 Token expirado, redirecionando para login...");
+        // console.log("Token expirado, redirecionando para login...");
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");

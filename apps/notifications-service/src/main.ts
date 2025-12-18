@@ -40,9 +40,9 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') || 3004;
   await app.listen(port);
 
-  console.log(`🚀 Notifications Service rodando na porta ${port}`);
-  console.log(`📬 RabbitMQ Consumer:  ${configService.get('EVENTS_QUEUE')}`);
-  console.log(`🔌 WebSocket disponível na porta ${port}`);
+  console.log(`Notifications Service rodando na porta ${port}`);
+  console.log(`RabbitMQ Consumer:  ${configService.get('EVENTS_QUEUE')}`);
+  console.log(`WebSocket disponível na porta ${port}`);
 }
 
 bootstrap();

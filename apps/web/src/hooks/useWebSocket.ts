@@ -18,30 +18,30 @@ export const useWebSocket = (userId: string | null) => {
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      console.log("WebSocket conectado");
+      // console.log("WebSocket conectado");
     });
 
     socket.on("connected", (data) => {
-      console.log("Servidor confirmou:", data);
+      // console.log("Servidor confirmou:", data);
     });
 
     socket.on("task:created", (data) => {
-      console.log("Nova tarefa:", data);
+      // console.log("Nova tarefa:", data);
       toast(`${data.message}`);
     });
 
     socket.on("task:updated", (data) => {
-      console.log("Tarefa atualizada:", data);
+      // console.log("Tarefa atualizada:", data);
       toast(`${data.message}`);
     });
 
     socket.on("comment:new", (data) => {
-      console.log("Novo comentário:", data);
+      // console.log("Novo comentário:", data);
       toast(`${data.message}`);
     });
 
     socket.on("disconnect", () => {
-      console.log("WebSocket desconectado");
+      // console.log("WebSocket desconectado");
     });
 
     return () => {

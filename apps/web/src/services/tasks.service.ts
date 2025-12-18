@@ -1,5 +1,11 @@
 import api from "@/lib/api";
-import type { Task, PaginatedResponse, Comment } from "@/types";
+import {
+  type Task,
+  type PaginatedResponse,
+  type Comment,
+  TaskStatus,
+  TaskPriority,
+} from "@/types";
 
 export const tasksService = {
   getTasks: async (params?: {
@@ -18,12 +24,29 @@ export const tasksService = {
     return response.data;
   },
 
-  createTask: async (data: Task): Promise<Task> => {
+  createTask: async (data: {
+    assignedUserIds: string[] | undefined;
+    title: string;
+    description: string;
+    priority: TaskPriority;
+    status: TaskStatus;
+    deadline?: string | undefined;
+  }): Promise<Task> => {
     const response = await api.post("/tasks", data);
     return response.data;
   },
 
-  updateTask: async (id: string, data: Task): Promise<Task> => {
+  updateTask: async (
+    id: string,
+    data: {
+      title?: string;
+      description?: string;
+      priority?: TaskPriority;
+      status?: TaskStatus;
+      deadline?: string;
+      assignedUserIds?: string[];
+    }
+  ): Promise<Task> => {
     const response = await api.put(`/tasks/${id}`, data);
     return response.data;
   },
