@@ -164,7 +164,15 @@ export class TasksService implements OnModuleInit {
       );
     }
 
-    await this.taskRepository.remove(task);
+    // Deletar comentários relacionados
+    await this.commentRepository.delete({ taskId: id });
+
+    // Deletar atribuições relacionadas
+    await this.assignmentRepository.delete({ taskId: id });
+
+    // Deletar a tarefa
+    await this.taskRepository.delete(id);
+
     return { message: 'Tarefa deletada com sucesso' };
   }
 

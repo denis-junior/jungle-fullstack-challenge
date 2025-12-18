@@ -52,9 +52,11 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ taskId }) => {
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
     },
     onError: (error: AxiosError<{ message?: string }>) => {
-      toast.error("Erro ao adicionar comentário", {
-        description: error.response?.data?.message || "Erro desconhecido",
-      });
+      const errorMessage =
+        error.message ||
+        error.response?.data?.message ||
+        "Erro ao adicionar comentário";
+      toast.error(errorMessage);
     },
   });
 

@@ -46,14 +46,24 @@ api.interceptors.response.use(
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");
         localStorage.removeItem("notifications");
-        
+
         // Redirecionar para a página inicial
         window.location.href = "/";
         return Promise.reject(refreshError);
       }
     }
 
-    return Promise.reject(error);
+    // Extrair mensagem de erro do backend
+    const errorMessage =
+      error.response?.data?.message || error.message || "Erro desconhecido";
+    const customError = new Error(errorMessage) as Error & {
+      response?: string | { message?: string };
+      status?: number;
+    };
+    customError.response = error.response;
+    customError.status = error.response?.status;
+
+    return Promise.reject(customError);
   }
 );
 

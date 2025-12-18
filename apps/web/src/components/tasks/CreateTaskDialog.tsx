@@ -92,11 +92,9 @@ export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
     } catch (error) {
       const errorMessage = error instanceof Error 
       ? error.message 
-      : (error as any)?.response?.data?.message || "Erro desconhecido";
+      : (error as any)?.response?.data?.message || "Erro ao criar tarefa";
       
-      toast.error("Erro ao criar tarefa", {
-      description: errorMessage,
-      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

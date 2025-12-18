@@ -88,9 +88,8 @@ export const TaskDetailPage = () => {
       navigate({ to: "/tasks" });
     },
     onError: (error: Error) => {
-      toast.error("Erro ao deletar tarefa", {
-        description: error.message || "Erro desconhecido",
-      });
+      const errorMessage = error.message || "Erro desconhecido";
+      toast.error(errorMessage);
     },
   });
 

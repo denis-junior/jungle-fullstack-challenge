@@ -100,11 +100,9 @@ export const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
       const errorMessage =
         error instanceof Error
           ? error.message
-          : (error as any)?.response?.data?.message || "Erro desconhecido";
+          : (error as any)?.response?.data?.message || "Erro ao editar tarefa";
 
-      toast.error("Erro ao criar tarefa", {
-        description: errorMessage,
-      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
