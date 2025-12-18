@@ -11,8 +11,12 @@ RUN npm install
 # Copiar código
 COPY . .
 
+# Copiar entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Expor porta
 EXPOSE 3002
 
-# Comando de desenvolvimento
-CMD ["npm", "run", "start:dev"]
+# Usar entrypoint para rodar migrations antes de iniciar
+ENTRYPOINT ["/docker-entrypoint.sh"]
