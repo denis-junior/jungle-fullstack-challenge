@@ -24,6 +24,24 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
+export interface IAuthLogin {
+  emailOrUsername: string;
+  password: string;
+}
+export interface IAuthRegister {
+  email: string;
+  username: string;
+  password: string;
+}
+
+export interface ITaskSubmit {
+  title: string;
+  description: string;
+  deadline: string;
+  priority: string;
+  status: string;
+  assignedUserIds: string[];
+}
 export interface Task {
   id: string;
   title: string;
@@ -53,16 +71,39 @@ export interface Comment {
   createdAt: string;
   user: User;
 }
-
+export interface NotificationMetadata {
+  taskId?: string;
+  taskTitle?: string;
+  commentId?: string;
+  oldStatus?: string;
+  newStatus?: string;
+}
 export interface Notification {
   id: string;
   userId: string;
   type: string;
   title: string;
   message: string;
-  metadata?: any;
+  metadata?: NotificationMetadata;
   read: boolean;
   createdAt: string;
+}
+
+export interface INotificationsLocalStorage {
+  type: string;
+  title: string;
+  message: string;
+  taskId: string;
+  id: string;
+  read: boolean;
+  createdAt: Date;
+}
+
+export interface INotificationWebSocket {
+  title: string;
+  message: string;
+  taskId: string;
+  assignedUserIds?: string[];
 }
 
 export interface PaginatedResponse<T> {
