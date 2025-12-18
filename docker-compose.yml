@@ -140,6 +140,18 @@ services:
     networks:
       - challenge-network
 
+  web:
+    container_name: web
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+    networks:
+      - challenge-network
+
 volumes:
   postgres_data:
     driver: local
