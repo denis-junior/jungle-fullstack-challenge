@@ -6,6 +6,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,6 +15,8 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -25,7 +28,10 @@ import { IAuthResponse } from 'src/interfaces';
 @Controller('api/auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -33,7 +39,16 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'User successfully registered' })
   @ApiResponse({ status: 409, description: 'Email or username already exists' })
   async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+    this.logger.info('Registering new user', {
+      username: registerDto.username,
+      context: 'AuthController',
+    });
+    const result = await this.authService.register(registerDto);
+    this.logger.info('User registered successfully', {
+      username: registerDto.username,
+      context: 'AuthController',
+    });
+    return result;
   }
 
   @Post('login')
@@ -42,7 +57,16 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User successfully logged in' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto): Promise<IAuthResponse> {
-    return this.authService.login(loginDto);
+    this.logger.info('Login attempt', {
+      emailOrUsername: loginDto.emailOrUsername,
+      context: 'AuthController',
+    });
+    const result = await this.authService.login(loginDto);
+    this.logger.info('Login successful', {
+      emailOrUsername: loginDto.emailOrUsername,
+      context: 'AuthController',
+    });
+    return result;
   }
 
   @Post('refresh')

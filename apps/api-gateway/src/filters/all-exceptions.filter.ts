@@ -4,13 +4,19 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  Logger,
+  Inject,
+  Injectable,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { Logger } from 'winston';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 
 @Catch()
+@Injectable()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
+  constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -37,13 +43,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       message = exception.message;
-      this.logger.error(
-        `Unhandled exception: ${exception.message}`,
-        exception.stack,
-      );
+      this.logger.error('Unhandled exception', {
+        context: 'AllExceptionsFilter',
+        message: exception.message,
+        stack: exception.stack,
+      });
     } else {
-      // Caso não seja Error nem HttpException, logar o objeto completo
-      this.logger.error(`Unknown exception type: ${JSON.stringify(exception)}`);
+      this.logger.error('Unknown exception type', {
+        context: 'AllExceptionsFilter',
+        exception: JSON.stringify(exception),
+      });
     }
 
     const errorResponse = {
@@ -55,9 +64,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message,
     };
 
-    this.logger.error(
-      `${request.method} ${request.url} - Status: ${status} - Message: ${JSON.stringify(message)}`,
-    );
+    this.logger.error('HTTP Exception', {
+      context: 'AllExceptionsFilter',
+      method: request.method,
+      path: request.url,
+      status,
+      message,
+    });
 
     response.status(status).json(errorResponse);
   }

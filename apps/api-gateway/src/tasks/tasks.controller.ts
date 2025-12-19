@@ -11,6 +11,7 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,6 +21,8 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -38,7 +41,10 @@ interface RequestWithUser extends Request {
 @UseGuards(ThrottlerGuard, JwtAuthGuard)
 @ApiBearerAuth()
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(
+    private readonly tasksService: TasksService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -49,7 +55,17 @@ export class TasksController {
     @Body() createTaskDto: CreateTaskDto,
     @Request() req: RequestWithUser,
   ): Promise<unknown> {
-    return this.tasksService.create(createTaskDto, req.user.id);
+    this.logger.info('Creating task', {
+      title: createTaskDto.title,
+      userId: req.user.id,
+      context: 'TasksController',
+    });
+    const result = await this.tasksService.create(createTaskDto, req.user.id);
+    this.logger.info('Task created successfully', {
+      userId: req.user.id,
+      context: 'TasksController',
+    });
+    return result;
   }
 
   @Get()

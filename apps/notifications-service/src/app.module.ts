@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_FILTER } from '@nestjs/core';
 import { NotificationsModule } from './notifications/notifications.module';
+import { LoggerModule } from './logger/logger.module';
+import { RpcExceptionFilter } from './filters/rpc-exception.filter';
 
 @Module({
   imports: [
@@ -9,6 +12,7 @@ import { NotificationsModule } from './notifications/notifications.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    LoggerModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -24,6 +28,12 @@ import { NotificationsModule } from './notifications/notifications.module';
       }),
     }),
     NotificationsModule,
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: RpcExceptionFilter,
+    },
   ],
 })
 export class AppModule {}

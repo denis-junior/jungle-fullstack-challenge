@@ -1,13 +1,27 @@
-import { ExceptionFilter, Catch, Logger, HttpException } from '@nestjs/common';
+import {
+  ExceptionFilter,
+  Catch,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { throwError } from 'rxjs';
+import { Logger } from 'winston';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 
 @Catch()
+@Injectable()
 export class RpcExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(RpcExceptionFilter.name);
+  constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
   catch(exception: unknown) {
-    this.logger.error('RPC Exception caught:', exception);
+    this.logger.error('RPC Exception caught', {
+      context: 'RpcExceptionFilter',
+      exception,
+    });
 
     if (exception instanceof RpcException) {
       return throwError(() => exception.getError());
@@ -25,9 +39,11 @@ export class RpcExceptionFilter implements ExceptionFilter {
             ? String(response.message)
             : 'Unknown error';
 
-      this.logger.error(
-        `HttpException: ${status} - ${JSON.stringify(message)}`,
-      );
+      this.logger.error('HttpException in RPC', {
+        context: 'RpcExceptionFilter',
+        status,
+        message,
+      });
 
       return throwError(() => ({
         statusCode: status,
@@ -37,7 +53,11 @@ export class RpcExceptionFilter implements ExceptionFilter {
     }
 
     if (exception instanceof Error) {
-      this.logger.error(exception.message, exception.stack);
+      this.logger.error('Error in RPC', {
+        context: 'RpcExceptionFilter',
+        message: exception.message,
+        stack: exception.stack,
+      });
       return throwError(() => ({
         statusCode: 500,
         message: exception.message,

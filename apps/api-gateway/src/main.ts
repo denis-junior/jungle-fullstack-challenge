@@ -2,21 +2,21 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+
+  // Winston Logger
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   // CORS
   app.enableCors({
     origin: configService.get<string>('CORS_ORIGIN') || 'http://localhost:3000',
     credentials: true,
   });
-
-  // Global Exception Filter
-  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Validation Pipe Global
   app.useGlobalPipes(

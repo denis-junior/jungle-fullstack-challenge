@@ -2,12 +2,15 @@ import { NestFactory } from '@nestjs/core';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AppModule } from './app.module';
-import { RpcExceptionFilter } from './filters/rpc-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+
+  // Winston Logger
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   // Configurar como microserviço RabbitMQ (consumer)
   app.connectMicroservice<MicroserviceOptions>({
@@ -21,9 +24,6 @@ async function bootstrap() {
       noAck: false,
     },
   });
-
-  // Global Exception Filter
-  app.useGlobalFilters(new RpcExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({
