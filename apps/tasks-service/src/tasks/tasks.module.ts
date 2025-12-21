@@ -7,10 +7,11 @@ import { TasksController } from './tasks.controller';
 import { Task } from './entities/task.entity';
 import { Comment } from './entities/comment.entity';
 import { TaskAssignment } from './entities/task-assignment.entity';
+import { TaskHistory } from './entities/task-history.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Task, Comment, TaskAssignment]),
+    TypeOrmModule.forFeature([Task, Comment, TaskAssignment, TaskHistory]),
     ClientsModule.registerAsync([
       {
         name: 'RABBITMQ_CLIENT',

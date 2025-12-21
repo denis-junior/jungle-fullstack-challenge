@@ -140,4 +140,22 @@ export class TasksService {
         ),
     );
   }
+
+  // HISTÓRICO
+
+  async getTaskHistory(
+    taskId: string,
+    page?: number,
+    size?: number,
+  ): Promise<unknown> {
+    return firstValueFrom(
+      this.tasksClient
+        .send({ cmd: 'find-task-history' }, { taskId, page, size })
+        .pipe(
+          catchError((error) => {
+            this.handleRpcError(error);
+          }),
+        ),
+    );
+  }
 }

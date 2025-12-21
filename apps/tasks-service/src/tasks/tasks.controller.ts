@@ -115,4 +115,21 @@ export class TasksController {
       this.handleRpcError(error);
     }
   }
+
+  // HISTÓRICO
+
+  @MessagePattern({ cmd: 'find-task-history' })
+  async getTaskHistory(
+    @Payload() data: { taskId: string; page?: number; size?: number },
+  ) {
+    try {
+      return await this.tasksService.getTaskHistory(
+        data.taskId,
+        data.page,
+        data.size,
+      );
+    } catch (error) {
+      this.handleRpcError(error);
+    }
+  }
 }

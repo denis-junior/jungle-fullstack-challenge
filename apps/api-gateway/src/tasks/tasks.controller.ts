@@ -140,4 +140,22 @@ export class TasksController {
   ): Promise<unknown> {
     return this.tasksService.findComments(taskId, page, size);
   }
+
+  // HISTÓRICO
+
+  @Get(':id/history')
+  @ApiOperation({ summary: 'Get task history (audit log) with pagination' })
+  @ApiResponse({
+    status: 200,
+    description: 'Task history retrieved successfully',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'size', required: false, type: Number })
+  async getTaskHistory(
+    @Param('id') taskId: string,
+    @Query('page') page?: number,
+    @Query('size') size?: number,
+  ): Promise<unknown> {
+    return this.tasksService.getTaskHistory(taskId, page, size);
+  }
 }
