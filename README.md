@@ -1,57 +1,54 @@
-# 🎯 Sistema de Gestão de Tarefas Colaborativo
+# Sistema de Gestão de Tarefas Colaborativo
 
-Sistema completo de gestão de tarefas com autenticação, notificações em tempo real e histórico de auditoria. Desenvolvido com arquitetura de microserviços usando **NestJS**, **React**, **RabbitMQ** e **WebSocket**.
-
-## 📋 Stack Tecnológica
-
-### Frontend
-- **React 18** + **TypeScript**
-- **TanStack Router** - Roteamento type-safe
-- **shadcn/ui** - Componentes UI
-- **Tailwind CSS** - Estilização
-- **React Hook Form** + **Zod** - Validação de formulários
-- **Axios** - Cliente HTTP
-- **Socket.io Client** - WebSocket
-
-### Backend
-- **NestJS** - Framework Node.js
-- **TypeORM** - ORM para PostgreSQL
-- **RabbitMQ** - Message broker
-- **PostgreSQL** - Banco de dados
-- **JWT** - Autenticação
-- **Winston** - Logging estruturado
-- **Swagger** - Documentação da API
-
-### DevOps
-- **Docker** + **Docker Compose**
-- **Turborepo** - Monorepo tooling
-- **pnpm** - Gerenciador de pacotes
+Sistema completo de gestão de tarefas com autenticação JWT, notificações em tempo real via WebSocket e histórico de auditoria. Desenvolvido em arquitetura de microserviços com **NestJS**, **React**, **RabbitMQ** e **PostgreSQL**.
 
 ---
 
-## 🎯 Contexto & Objetivo
+## 🚀 Como Rodar
 
-Construir um **Sistema de Gestão de Tarefas Colaborativo** com autenticação simples, CRUD de tarefas, comentários, atribuição e notificações. O sistema deve rodar em **monorepo** e expor uma **UI** limpa, responsiva e usável. O back‑end deve ser composto por **microserviços Nest** que se comunicam via **RabbitMQ**; o acesso HTTP externo passa por um **API Gateway** (Nest HTTP).
+### Com Docker (Recomendado)
 
-**O que queremos observar:**
+```bash
+# Clone o repositório
+git clone <repo-url>
+cd jungle-fullstack-challenge
 
-* Organização, clareza e pragmatismo.
-* Segurança básica (hash de senha, validação de entrada).
-* Divisão de responsabilidades entre serviços.
-* Qualidade da UI e DX (developer experience).
+# Suba todos os serviços
+docker compose up -d
+
+# Ou use o script helper
+chmod +x docker.sh
+./docker.sh start
+```
+
+**Serviços disponíveis:**
+- Frontend: http://localhost:3000
+- API Gateway: http://localhost:3001
+- Swagger: http://localhost:3001/api/docs
+- RabbitMQ UI: http://localhost:15672 (admin/admin)
+
+### Desenvolvimento Local
+
+```bash
+pnpm install
+docker compose up -d db rabbitmq
+
+# Em terminais separados:
+cd apps/auth-service && pnpm dev
+cd apps/tasks-service && pnpm dev
+cd apps/notifications-service && pnpm dev
+cd apps/api-gateway && pnpm dev
+cd apps/web && pnpm dev
+```
 
 ---
 
-## 🧱 Requisitos Funcionais
+### Tarefas
 
-### Autenticação & Gateway
-
-* **JWT** com **cadastro/login** (email, username, password) e **proteção de rotas no API Gateway**.
----
+```http
+GET /api/tasks?page=1&limit=10&status=TODO&priority=HIGH
 
 ## 🏗️ Arquitetura
-
-### Microserviços
 
 ```
 ┌─────────────────┐
@@ -95,409 +92,302 @@ Construir um **Sistema de Gestão de Tarefas Colaborativo** com autenticação s
          [Navegador]
 ```
 
-### Fluxo de Dados
+**Fluxo:**
+1. Frontend → HTTP → API Gateway
+2. API Gateway → RabbitMQ (RPC) → Auth/Tasks Services
+3. Tasks Service → Publica eventos → RabbitMQ → Notifications Service
+4. Notifications Service → WebSocket → Frontend
 
-1. **Frontend** → Requisições HTTP → **API Gateway**
-2. **API Gateway** → RabbitMQ (RPC) → **Auth Service** / **Tasks Service**
-3. **Tasks Service** → Publica eventos → **RabbitMQ**
-4. **Notifications Service** → Consome eventos → Envia via **WebSocket** → **Frontend**
-
-### Banco de Dados
-
-- **PostgreSQL** compartilhado entre os microserviços
-- Cada serviço tem suas próprias tabelas:
-  - `auth-service`: `users`
-  - `tasks-service`: `tasks`, `comments`, `task_history`, `task_users_user`
-  - `notifications-service`: `notifications`
+**Banco de Dados:**
+- PostgreSQL compartilhado
+- Cada serviço tem suas próprias tabelas
+- `auth-service`: users
+- `tasks-service`: tasks, comments, task_history
+- `notifications-service`: notifications
 
 ---
 
-## 🚀 Como Rodar
+## 🧠 Decisões Técnicas e Trade-offs
 
-### Pré-requisitos
+### 1. PostgreSQL Compartilhado
+**Decisão:** Um único banco PostgreSQL para todos os microserviços.
+**Trade-off:** Simplicidade vs Isolamento
+- ✅ Facilita desenvolvimento e deploy
+- ✅ Joins diretos quando necessário (enriquecimento de dados)
+- ❌ Acoplamento no nível de dados
+- **Produção:** Separar bancos por serviço
 
-- **Docker** e **Docker Compose**
-- **pnpm** (para desenvolvimento local)
-- **Node.js 20+**
+### 2. RabbitMQ para Comunicação
+**Decisão:** RPC para operações síncronas, Pub/Sub para eventos.
+- ✅ Desacoplamento completo entre serviços
+- ✅ Retry automático e dead-letter queues
+- ✅ Permite escalar serviços independentemente
+- ❌ Complexidade adicional vs HTTP direto
+- ❌ Latência adicional em operações síncronas
 
-### Com Docker (Recomendado)
+### 3. API Gateway Centralizado
+**Decisão:** Único ponto de entrada HTTP com autenticação JWT.
+- ✅ Autenticação centralizada
+- ✅ Rate limiting global
+- ✅ Swagger em um único lugar
+- ❌ Pode virar gargalo (mitigar com cache/load balancer)
+
+### 4. WebSocket Separado
+**Decisão:** Notifications Service isolado para WebSocket.
+- ✅ Não sobrecarrega API Gateway
+- ✅ Facilita escalar apenas conexões WS
+- ✅ Isolamento de falhas
+- ❌ Mais um serviço para gerenciar
+
+### 5. Audit Log Automático
+**Decisão:** TaskHistory com rastreamento transparente.
+- ✅ Não esquece de registrar mudanças
+- ✅ Diff automático (before/after)
+- ❌ Performance: INSERT adicional em cada operação
+- **Alternativa futura:** Event sourcing
+
+### 6. Build Args para Vite no Docker
+**Decisão:** Passar VITE_API_URL via build args.
+- ✅ Variáveis disponíveis em build time
+- ✅ Solução simples para problema comum
+- ❌ Requer rebuild se mudar URL da API
+- **Alternativa:** Runtime config com injeção de variáveis
+
+### 7. Single-Stage Docker Builds
+**Decisão:** Builds simples sem etapa de produção.
+- ✅ Builds muito mais rápidos
+- ✅ Facilita debugging
+- ❌ Imagens maiores (~500MB vs ~200MB)
+- **Produção:** Implementar multi-stage builds
+
+### 8. Winston para Logging
+**Decisão:** Logs estruturados em JSON.
+- ✅ Facilita parsing e agregação
+- ✅ Context tags para rastreamento
+- ✅ Preparado para ELK/Datadog
+- ❌ Menos legível em desenvolvimento (pode usar pretty-print)
+
+---
+
+## 🔍 Problemas Conhecidos e Melhorias
+
+### Limitações Atuais
+
+**1. Sem Cache**
+- ❌ Todas as consultas batem no banco
+- 💡 **Melhoria:** Redis para cache de sessões e queries frequentes
+
+**2. Testes Incompletos**
+- ✅ Testes unitários básicos (AuthService, TasksService)
+- ❌ Faltam testes E2E e de integração
+- ❌ Cobertura baixa (~30%)
+- 💡 **Melhoria:** Testes E2E com Playwright, coverage >80%
+
+**3. Observabilidade Básica**
+- ✅ Logs estruturados com Winston
+- ✅ Health checks simples
+- ❌ Sem métricas (latência, throughput)
+- ❌ Sem tracing distribuído
+- 💡 **Melhoria:** Prometheus + Grafana + Jaeger
+
+**4. Segurança**
+- ✅ JWT com refresh token
+- ✅ Bcrypt para senhas
+- ✅ Rate limiting básico (10 req/s global)
+- ❌ Sem HTTPS
+- ❌ Rate limiting não é por usuário
+- ❌ Sem helmet.js
+- 💡 **Melhoria:** HTTPS, helmet, rate limit por IP/user, 2FA
+
+**5. Performance**
+- ❌ N+1 queries em algumas listagens
+- ❌ Sem paginação cursor-based (usa offset)
+- ❌ Frontend sem cache (TanStack Query)
+- 💡 **Melhoria:** Eager loading, cursor pagination, optimistic updates
+
+**6. DevOps**
+- ✅ Docker Compose funcional
+- ❌ Sem CI/CD
+- ❌ Sem monitoramento de containers
+- 💡 **Melhoria:** GitHub Actions, Kubernetes, Prometheus
+
+### O que Melhoraria com Mais Tempo
+
+**Backend (Prioridade Alta):**
+- [ ] Redis para cache de sessões e queries
+- [ ] Testes E2E e integração (coverage >80%)
+- [ ] RBAC (roles: admin, manager, user)
+- [ ] Soft delete em todas as entidades
+- [ ] Migrations versionadas e documentadas
+- [ ] Background jobs para emails/notificações pesadas
+
+**Backend (Prioridade Média):**
+- [ ] GraphQL Gateway como alternativa ao REST
+- [ ] Event sourcing para audit log robusto
+- [ ] Saga pattern para transações distribuídas
+- [ ] Elasticsearch para busca full-text
+- [ ] Rate limiting por usuário/IP
+- [ ] Helmet.js e security headers
+
+**Frontend (Prioridade Alta):**
+- [ ] TanStack Query (cache, optimistic updates)
+- [ ] Skeleton loaders consistentes
+- [ ] Filtros avançados (datas, múltiplos filtros)
+- [ ] Kanban board com drag & drop
+- [ ] Dark mode
+
+**Frontend (Prioridade Média):**
+- [ ] Internacionalização (i18n)
+- [ ] Export de tarefas (PDF, Excel)
+- [ ] Offline-first com service workers
+- [ ] Notificações push do navegador
+- [ ] Gráficos de produtividade
+
+**DevOps (Prioridade Alta):**
+- [ ] CI/CD pipeline completo
+- [ ] Multi-stage Docker builds
+- [ ] Kubernetes manifests
+- [ ] Monitoring (Grafana + Prometheus)
+- [ ] Healthchecks avançados (liveness/readiness)
+
+**DevOps (Prioridade Média):**
+- [ ] Terraform para IaC
+- [ ] Blue-green deployment
+- [ ] Log aggregation (ELK stack)
+- [ ] APM (Datadog/New Relic)
+- [ ] Auto-scaling configurado
+
+---
+
+## ⏱️ Tempo Gasto
+
+| Parte | Tempo | Observações |
+|-------|-------|-------------|
+| Setup do monorepo (Turborepo, estrutura) | 1h | Configuração inicial, packages shared |
+| Auth Service (JWT, bcrypt, guards) | 3h | Registro, login, refresh token |
+| Tasks Service (CRUD básico) | 2h | Entidades, DTOs, endpoints |
+| Sistema de Comentários | 1h | Relacionamento, paginação |
+| **Audit Log / TaskHistory** | 2h | Rastreamento automático, diff before/after |
+| Notifications Service (WebSocket) | 3h | Socket.io, autenticação JWT, eventos |
+| API Gateway (routing, Swagger) | 2h | Proxy RPC, guards centralizados |
+| Frontend - Setup + Routing | 2h | TanStack Router, shadcn/ui |
+| Frontend - Telas (Login, Tasks, Detail) | 4h | Componentes, formulários, validação |
+| Integração WebSocket no Frontend | 2h | Context, toast, badge de notificações |
+| **Docker Compose** | 2h | Dockerfiles, docker-compose.yml |
+| **Debug Docker (Vite env vars, JSON.parse)** | 3h | Build args, validação localStorage |
+| Winston Logging | 2h | Configuração em todos os serviços |
+| Testes Unitários | 2h | AuthService, TasksService, controllers |
+| Documentação (README, Swagger) | 2h | Este README, comentários inline |
+| **TOTAL** | **~33-35h** | |
+
+**Distribuição:**
+- Backend: ~18h (55%)
+- Frontend: ~8h (24%)
+- DevOps/Docker: ~5h (15%)
+- Testes/Docs: ~4h (12%)
+
+---
+
+## 📝 Instruções Específicas
+
+### 1. Primeiro Acesso
+
+Após subir os containers, acesse http://localhost:3000 e:
+1. Clique em "Registrar"
+2. Crie sua conta (os campos são validados)
+3. Faça login automaticamente após registro
+4. Crie sua primeira tarefa
+
+### 2. Testar Notificações em Tempo Real
+
+1. Abra http://localhost:3000 em **duas abas/navegadores**
+2. Faça login com **dois usuários diferentes** (um em cada aba)
+3. Na primeira aba: crie uma tarefa e atribua ao segundo usuário
+4. Na segunda aba: veja a notificação aparecer em tempo real (badge no ícone)
+5. Teste também: comentar em uma tarefa, mudar status
+
+### 3. Ver Histórico de Auditoria
+
+1. Entre em qualquer tarefa (clique na lista)
+2. Role até o final da página
+3. Veja todas as alterações registradas:
+   - Quem criou
+   - Quem atualizou (com diff do before/after)
+   - Quem comentou
+   - Quem atribuiu/desatribuiu usuários
+
+### 4. Acessar Swagger
+
+1. Acesse http://localhost:3001/api/docs
+2. Clique em "Authorize" no canto superior direito
+3. Faça login via `/auth/login` endpoint
+4. Copie o `accessToken` do response
+5. Cole no formato: `Bearer <accessToken>`
+6. Agora pode testar todos os endpoints autenticados
+
+### 5. Monitorar RabbitMQ
+
+1. Acesse http://localhost:15672
+2. Login: `admin` / `admin`
+3. Veja as filas: `auth_queue`, `tasks_queue`, `events_queue`
+4. Monitore mensagens sendo processadas em tempo real
+
+### 6. Scripts Docker Úteis
 
 ```bash
-# Clone o repositório
-git clone <repo-url>
-cd jungle-fullstack-challenge
+# Ver logs em tempo real
+./docker.sh logs
 
-# Suba todos os serviços
+# Rebuild apenas um serviço
+docker compose build web --no-cache
+docker compose up -d web --force-recreate
+
+# Resetar banco de dados (cuidado!)
+docker compose down -v
 docker compose up -d
 
-# Ou use os scripts helper
-chmod +x docker.sh
-./docker.sh start
+# Verificar health dos serviços
+docker compose ps
 ```
 
-**Serviços disponíveis:**
-- Frontend: http://localhost:3000
-- API Gateway: http://localhost:3001
-- Swagger: http://localhost:3001/api
-- Auth Service: http://localhost:3002
-- Tasks Service: http://localhost:3003
-- Notifications: http://localhost:3004
-- RabbitMQ UI: http://localhost:15672 (admin/admin)
-- PostgreSQL: localhost:5432 (postgres/password)
+### 7. Desenvolvimento Local (Sem Docker)
 
-### Desenvolvimento Local
+Se preferir rodar localmente para hot reload mais rápido:
 
 ```bash
-# Instalar dependências
-pnpm install
-
-# Subir apenas infra (DB + RabbitMQ)
+# Terminal 1: Infra
 docker compose up -d db rabbitmq
 
-# Em terminais separados, rodar cada serviço:
+# Terminal 2-5: Serviços
 cd apps/auth-service && pnpm dev
 cd apps/tasks-service && pnpm dev
 cd apps/notifications-service && pnpm dev
 cd apps/api-gateway && pnpm dev
+
+# Terminal 6: Frontend
 cd apps/web && pnpm dev
 ```
 
-### Scripts Docker Helper
+**Atenção:** Ajuste os `.env` de cada serviço para apontar para `localhost` ao invés dos nomes dos containers.
 
-```bash
-./docker.sh build   # Reconstrói todas as imagens
-./docker.sh start   # Inicia todos os serviços
-./docker.sh stop    # Para e remove containers
-./docker.sh logs    # Mostra logs de todos os serviços
-./docker.sh clean   # Remove tudo (containers, volumes, imagens)
-```
+### 8. Troubleshooting Comum
 
----
+**Erro: "Cannot connect to RabbitMQ"**
+- Aguarde ~10s após `docker compose up` (health checks)
+- Verifique: `docker compose ps` - RabbitMQ deve estar "healthy"
 
-## 📡 Endpoints da API
+**Erro: Frontend mostra "undefined is not valid JSON"**
+- Limpe localStorage: DevTools → Application → Local Storage → Clear
+- Isso já foi corrigido, mas pode acontecer em builds antigos
 
-### Autenticação
+**Erro: "Port 3000 already in use"**
+- Algum serviço está usando a porta
+- `docker compose down` ou mude a porta no docker-compose.yml
 
-```http
-POST /api/auth/register
-Body: { name, email, username, password }
-
-POST /api/auth/login
-Body: { emailOrUsername, password }
-Response: { user, accessToken, refreshToken }
-
-POST /api/auth/refresh
-Body: { refreshToken }
-Response: { accessToken }
-
-GET /api/auth/users
-Headers: Authorization: Bearer <token>
-```
-
-### Tarefas
-
-```http
-GET /api/tasks?page=1&limit=10&status=TODO&priority=HIGH
-Headers: Authorization: Bearer <token>
-
-POST /api/tasks
-Headers: Authorization: Bearer <token>
-Body: { title, description, dueDate, priority, assignedUserIds }
-
-GET /api/tasks/:id
-PUT /api/tasks/:id
-DELETE /api/tasks/:id
-
-GET /api/tasks/:id/history?page=1&limit=10
-# Retorna histórico de alterações (audit log)
-```
-
-### Comentários
-
-```http
-POST /api/tasks/:id/comments
-Body: { content }
-
-GET /api/tasks/:id/comments?page=1&limit=10
-```
-
-### WebSocket (Notificações)
-
-```javascript
-// Conectar ao WebSocket
-const socket = io('http://localhost:3004', {
-  auth: { token: '<accessToken>' }
-});
-
-// Eventos recebidos
-socket.on('task:created', (data) => { /* ... */ });
-socket.on('task:updated', (data) => { /* ... */ });
-socket.on('task:assigned', (data) => { /* ... */ });
-socket.on('comment:new', (data) => { /* ... */ });
-```
-
----
-
-## ✨ Funcionalidades Implementadas
-
-### ✅ Autenticação
-- [x] Registro de usuários com validação
-- [x] Login com email ou username
-- [x] JWT com access token (15min) e refresh token (7 dias)
-- [x] Hash de senha com bcrypt
-- [x] Guards JWT no API Gateway
-- [x] Endpoint de refresh token
-
-### ✅ Tarefas
-- [x] CRUD completo de tarefas
-- [x] Paginação e filtros (status, prioridade)
-- [x] Atribuição a múltiplos usuários
-- [x] 4 níveis de prioridade (LOW, MEDIUM, HIGH, URGENT)
-- [x] 4 status (TODO, IN_PROGRESS, REVIEW, DONE)
-- [x] Sistema de comentários com paginação
-- [x] Histórico de alterações (Audit Log)
-
-### ✅ Histórico/Audit Log
-- [x] Rastreamento automático de alterações
-- [x] 6 tipos de ações: CREATED, UPDATED, STATUS_CHANGED, ASSIGNED, UNASSIGNED, COMMENTED
-- [x] Armazena diff das mudanças (before/after)
-- [x] Enriquecimento com dados do usuário
-- [x] Endpoint paginado `GET /api/tasks/:id/history`
-
-### ✅ Notificações em Tempo Real
-- [x] WebSocket com Socket.io
-- [x] Autenticação JWT no WebSocket
-- [x] Eventos: task:created, task:updated, task:assigned, comment:new
-- [x] Persistência de notificações
-- [x] Badge de contagem não lidas
-- [x] Marcar como lida
-
-### ✅ Arquitetura
-- [x] Monorepo com Turborepo
-- [x] Arquitetura de microserviços
-- [x] RabbitMQ para comunicação entre serviços
-- [x] API Gateway como ponto de entrada único
-- [x] Docker Compose para orquestração
-- [x] Health checks nos serviços
-
-### ✅ Qualidade de Código
-- [x] TypeScript em todo o projeto
-- [x] ESLint configurado
-- [x] Winston para logging estruturado
-- [x] Testes unitários (services e controllers)
-- [x] Validação de dados com class-validator/Zod
-- [x] Documentação Swagger/OpenAPI
-
-### ✅ Frontend
-- [x] React 18 com TypeScript
-- [x] TanStack Router com rotas tipadas
-- [x] shadcn/ui + Tailwind CSS
-- [x] Autenticação com context API
-- [x] Interceptor axios para refresh token
-- [x] Toast notifications
-- [x] Formulários com validação
-- [x] WebSocket para notificações em tempo real
-- [x] Interface responsiva
-
----
-
----
-
-## 🧠 Decisões Técnicas
-
-### Arquitetura de Microserviços
-
-**Por que RabbitMQ?**
-- Comunicação assíncrona entre serviços
-- RPC (Request-Reply) para operações síncronas via API Gateway
-- Publish/Subscribe para eventos (notificações)
-- Desacoplamento entre serviços
-
-**API Gateway como Único Ponto de Entrada**
-- Centraliza autenticação JWT
-- Simplifica CORS e rate limiting
-- Roteamento inteligente para microserviços
-- Facilita versionamento da API
-
-**PostgreSQL Compartilhado**
-- Trade-off: Simplicidade vs Isolamento total
-- Cada serviço tem suas próprias tabelas
-- Facilita joins quando necessário (ex: enriquecimento de dados)
-- Em produção: considerar bancos separados
-
-### Autenticação
-
-**JWT com Refresh Token**
-- Access Token: 15 minutos (segurança)
-- Refresh Token: 7 dias (UX)
-- Refresh automático no frontend (interceptor axios)
-
-**Guards no Gateway**
-- Validação JWT centralizada
-- Propaga userId via RabbitMQ para microserviços
-- Evita duplicação de lógica de auth
-
-### Audit Log
-
-**Implementação Automática**
-- Rastreamento transparente em operações do TasksService
-- Calcula diff automático (before/after)
-- 6 tipos de ações específicas
-- Útil para compliance e debugging
-
-### Frontend
-
-**TanStack Router**
-- Type-safe routing
-- Code splitting automático
-- Melhor DX que React Router
-
-**Context API vs Zustand**
-- Context API para auth (simples, built-in)
-- Não há necessidade de state management complexo
-
-**WebSocket Separado do HTTP**
-- Notifications Service isolado
-- Evita overhead no API Gateway
-- Facilita escalar apenas a parte de WebSocket
-
-### Docker
-
-**Build Args para Variáveis VITE**
-- Variáveis `VITE_*` precisam estar disponíveis em **build time**
-- Build args no docker-compose passam valores para Dockerfile
-- Solução para problema comum com Vite em containers
-
-**Single-Stage Builds**
-- Inicialmente tentei multi-stage (production)
-- Simplificado para facilitar desenvolvimento
-- Trade-off: Imagens maiores, mas builds mais rápidos
-
-### Logging
-
-**Winston Estruturado**
-- Logs JSON para facilitar parsing
-- Níveis: error, warn, info, debug
-- Context tags para rastreamento distribuído
-- Facilita integração futura com ELK/Datadog
-
----
-
-## 🔍 Problemas Conhecidos & Melhorias Futuras
-
-### Limitações Atuais
-
-1. **PostgreSQL Compartilhado**
-   - Em produção: separar banco de dados por serviço
-   - Considerar event sourcing para histórico
-
-2. **Sem Cache**
-   - Redis para cache de sessões JWT
-   - Cache de queries frequentes (lista de usuários)
-
-3. **Testes**
-   - Testes unitários básicos implementados
-   - Faltam: testes E2E, testes de integração
-   - Cobertura poderia ser maior
-
-4. **Observabilidade**
-   - Logs estruturados implementados
-   - Faltam: métricas (Prometheus), tracing (Jaeger)
-   - Health checks básicos (podem ser expandidos)
-
-5. **Segurança**
-   - HTTPS não configurado (usar nginx reverse proxy)
-   - Rate limiting implementado, mas sem controle por usuário
-   - Falta helmet.js para headers de segurança
-
-### Melhorias Futuras
-
-**Backend:**
-- [ ] Implementar CQRS para separar reads/writes
-- [ ] Event sourcing para audit log mais robusto
-- [ ] GraphQL Gateway (alternativa ao REST)
-- [ ] Implementar saga pattern para transações distribuídas
-- [ ] Redis para cache e sessions
-- [ ] Elasticsearch para busca full-text em tarefas
-- [ ] Background jobs com Bull/BullMQ
-- [ ] Versionamento da API (v1, v2)
-
-**Frontend:**
-- [ ] TanStack Query para cache de API
-- [ ] Otimistic updates
-- [ ] Offline-first com service workers
-- [ ] Drag & drop para reordenar tarefas (Kanban)
-- [ ] Dark mode
-- [ ] Filtros avançados (data range, múltiplos status)
-- [ ] Export de tarefas (PDF, CSV)
-
-**DevOps:**
-- [ ] CI/CD com GitHub Actions
-- [ ] Kubernetes manifests
-- [ ] Terraform para infraestrutura
-- [ ] Monitoring com Grafana + Prometheus
-- [ ] Log aggregation com ELK stack
-- [ ] Multi-stage Docker builds para produção
-
-**Segurança:**
-- [ ] OAuth2/OIDC (Google, GitHub login)
-- [ ] 2FA
-- [ ] RBAC (roles: admin, user, viewer)
-- [ ] Audit log também para auth service
-- [ ] Rate limiting por usuário
-- [ ] Input sanitization adicional
-
----
-
-## ⏱️ Tempo de Desenvolvimento
-
-| Tarefa | Tempo Estimado |
-|--------|----------------|
-| Setup inicial do monorepo | 1h |
-| Auth Service (JWT, bcrypt, endpoints) | 3h |
-| Tasks Service (CRUD, comentários) | 4h |
-| Audit Log / TaskHistory | 2h |
-| Notifications Service (WebSocket, eventos) | 3h |
-| API Gateway (routing, guards) | 2h |
-| Frontend (páginas, componentes, routing) | 6h |
-| Integração WebSocket no frontend | 2h |
-| Docker Compose e Dockerfiles | 4h |
-| Debugging e ajustes (JSON.parse, env vars) | 3h |
-| Winston logging e testes unitários | 3h |
-| Documentação (README, Swagger) | 2h |
-| **Total** | **~35h** |
-
----
-
-## 🧪 Testes
-
-### Executar Testes Localmente
-
-```bash
-# Todos os testes
-pnpm test
-
-# Testes de um serviço específico
-cd apps/auth-service && pnpm test
-cd apps/tasks-service && pnpm test
-
-# Coverage
-pnpm test:cov
-```
-
-### Testes Implementados
-
-**Auth Service:**
-- ✅ AuthService.register() - criação de usuário
-- ✅ AuthService.login() - validação de credenciais
-- ✅ AuthService.validateUser() - verificação de senha
-- ✅ AuthController - endpoints
-
-**Tasks Service:**
-- ✅ TasksService.create() - criação de tarefa
-- ✅ TasksService.update() - atualização de tarefa
-- ✅ TasksService.findAll() - listagem com filtros
-- ✅ TasksController - message patterns
+**Build do Docker muito lento?**
+- Use `./docker.sh build` que já tem `--parallel`
+- Primeira vez demora ~5-10min (npm install em 5 serviços)
+- Builds subsequentes são mais rápidos (cache)
 
 **API Gateway:**
 - ✅ Health check endpoint
