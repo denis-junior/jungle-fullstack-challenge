@@ -2,28 +2,20 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
-
-# Copy workspace configuration files
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-
-# Copy all necessary packages
-COPY packages ./packages
-COPY apps/web ./apps/web
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Build the application
-WORKDIR /app/apps/web
-RUN pnpm build
-
-# Install serve to host the static files
 RUN npm install -g serve
 
-# Expose port
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+ARG VITE_API_URL=http://localhost:3001/api
+ARG VITE_WS_URL=ws://localhost:3004
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_WS_URL=$VITE_WS_URL
+
+RUN npm run build
+
 EXPOSE 3000
 
-# Start the application
 CMD ["serve", "-s", "dist", "-l", "3000"]

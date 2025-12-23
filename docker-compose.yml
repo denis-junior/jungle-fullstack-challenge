@@ -44,7 +44,7 @@ services:
     ports:
       - "3002:3002"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3002
       - DB_HOST=db
       - DB_PORT=5432
@@ -57,8 +57,10 @@ services:
       - JWT_REFRESH_EXPIRES_IN=7d
       - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
     depends_on:
-      - db
-      - rabbitmq
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - challenge-network
 
@@ -74,7 +76,7 @@ services:
     ports:
       - "3003:3003"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3003
       - DB_HOST=db
       - DB_PORT=5432
@@ -85,8 +87,10 @@ services:
       - TASKS_QUEUE=tasks_queue
       - EVENTS_QUEUE=events_queue
     depends_on:
-      - db
-      - rabbitmq
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - challenge-network
 
@@ -98,7 +102,7 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3001
       - JWT_SECRET=junglechallengsecretjwt
       - JWT_EXPIRES_IN=15m
@@ -111,8 +115,12 @@ services:
       - EVENTS_QUEUE=events_queue
       - CORS_ORIGIN=http://localhost:3000
     depends_on:
-      - rabbitmq
-      - auth-service
+      rabbitmq:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      tasks-service:
+        condition: service_started
     networks:
       - challenge-network
 
@@ -124,7 +132,7 @@ services:
     ports:
       - '3004:3004'
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3004
       - DB_HOST=db
       - DB_PORT=5432
@@ -135,20 +143,26 @@ services:
       - EVENTS_QUEUE=events_queue
       - JWT_SECRET=junglechallengsecretjwt
     depends_on:
-      - db
-      - rabbitmq
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - challenge-network
 
   web:
     container_name: web
     build:
-      context: .
-      dockerfile: apps/web/Dockerfile
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:3001/api
+        - VITE_WS_URL=ws://localhost:3004
     ports:
       - "3000:3000"
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_started
     networks:
       - challenge-network
 

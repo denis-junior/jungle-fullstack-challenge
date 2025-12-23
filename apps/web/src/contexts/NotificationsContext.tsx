@@ -47,7 +47,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     // Carregar notificações do localStorage na inicialização
     try {
       const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
-      if (stored) {
+      if (stored && stored !== "undefined") {
         const parsed = JSON.parse(stored);
         return parsed.map((n: INotificationsLocalStorage) => ({
           ...n,
@@ -56,6 +56,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Erro ao carregar notificações do localStorage:", error);
+      localStorage.removeItem(NOTIFICATIONS_STORAGE_KEY);
     }
     return [];
   });

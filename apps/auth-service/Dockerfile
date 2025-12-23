@@ -2,21 +2,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copiar package files
 COPY package*.json ./
-
-# Instalar dependências
 RUN npm install
 
-# Copiar código
 COPY . .
+RUN npm run build
 
-# Copiar entrypoint script
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# Expor porta
 EXPOSE 3002
 
-# Usar entrypoint para rodar migrations antes de iniciar
 ENTRYPOINT ["/docker-entrypoint.sh"]
